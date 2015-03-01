@@ -1,0 +1,24 @@
+{
+  "name": "logisim",
+  "version": "0.0.0",
+  "authors": [
+    "Manu Goyal <manu.goyal2013@gmail.com>"
+  ],
+  "description": "A port of logisim",
+  "main": "Gulpfile.js",
+  "keywords": [
+    "logisim"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.2"
+  }
+}
