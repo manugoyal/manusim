@@ -42,6 +42,7 @@ var Component = React.createClass({
         // If we clicked on the input port, register a click
         if (this.refs['input_0'].wasClicked(misc.getRelativePosition(
             event, this.refs.svg.getDOMNode()))) {
+            console.log('clicked input pin');
             this.props.registerClick(
                 this.props.stateObj.inputs[0]);
         }
@@ -75,5 +76,5 @@ var Component = React.createClass({
     }
 });
 
-State.prototype.renderingComponent = Component;
+State.prototype.renderingComponent = React.createFactory(Component);
 module.exports = State;

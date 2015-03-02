@@ -12,6 +12,7 @@
   "author": "Manu Goyal",
   "license": "MIT",
   "dependencies": {
+    "jquery": "^2.1.3",
     "numeric": "^1.2.6",
     "react": "^0.12.2",
     "underscore": "^1.8.2"
@@ -20,9 +21,9 @@
     "browserify": "^9.0.3",
     "del": "^1.1.1",
     "gulp": "^3.8.11",
-    "gulp-browserify": "^0.5.1",
-    "gulp-concat": "^2.5.2",
     "gulp-connect": "^2.2.0",
-    "gulp-watch": "^4.1.1"
+    "gulp-watch": "^4.1.1",
+    "reactify": "^1.0.0",
+    "vinyl-source-stream": "^1.0.0"
   }
 }

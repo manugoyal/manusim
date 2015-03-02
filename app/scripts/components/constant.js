@@ -76,5 +76,5 @@ var Component = React.createClass({
     }
 });
 
-State.prototype.renderingComponent = Component;
+State.prototype.renderingComponent = React.createFactory(Component);
 module.exports = State;

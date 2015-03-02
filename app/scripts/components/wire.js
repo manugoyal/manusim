@@ -44,4 +44,4 @@ var Wire = React.createClass({
     }
 });
 
-module.exports = Wire;
+module.exports = React.createFactory(Wire);

@@ -8,7 +8,7 @@ var React = require('react')
 
 var length = 10;
 // The radius around which clicking will associate with the tick
-var clickRadius = 5;
+var clickRadius = 10;
 // The spacing around each tick
 var vSpace = 20;
 
@@ -27,6 +27,7 @@ var Tick = React.createClass({
 
     render: function() {
         return DOM.line({
+            key: this.props.key,
             x1: this.props.pos.x - length/2, y1: this.props.pos.y,
             x2: this.props.pos.x + length/2, y2: this.props.pos.y,
             stroke: 'blue'});
@@ -36,4 +37,4 @@ var Tick = React.createClass({
 module.exports.length = length;
 module.exports.clickRadius = clickRadius;
 module.exports.vSpace = vSpace;
-module.exports.Tick = Tick;
+module.exports.Tick = React.createFactory(Tick);

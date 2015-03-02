@@ -137,6 +137,7 @@ var Component = React.createClass({
 
         // Checks if we clicked the output port
         if (this.refs['output_0'].wasClicked(relativePos)) {
+            console.log('clicked output pin');
             this.props.registerClick(
                 this.props.stateObj.outputs[0]);
             return;
@@ -153,6 +154,7 @@ var Component = React.createClass({
         var inputTicks = _.map(_.range(obj.inputs.length), function (ind) {
             return tick.Tick({
                 pos: positions.tickCoords[port.input][ind],
+                key: 'input_' + ind,
                 ref: 'input_' + ind});
         });
 
@@ -182,5 +184,5 @@ var Component = React.createClass({
 });
 
 // Each state object points to the container used to render it
-State.prototype.renderingComponent = Component;
+State.prototype.renderingComponent = React.createFactory(Component);
 module.exports = State;

@@ -1,9 +1,10 @@
 var gulp = require('gulp'),
-    browserify = require('gulp-browserify'),
-    concat = require('gulp-concat'),
+    source = require('vinyl-source-stream'),
+    browserify = require('browserify'),
     del = require('del'),
     connect = require('gulp-connect'),
-    watch = require('gulp-watch')
+    watch = require('gulp-watch'),
+    reactify = require('reactify')
 ;
 
 
@@ -37,28 +38,21 @@ gulp.task('css', function() {
 
 // Browserifies the bundled javascript and sends it to dist/js
 gulp.task('javascript', function() {
-    var stream = gulp.src('app/scripts/main.js')
-            .pipe(browserify({debug: true}))
-            .on('prebundle', function(bundler) {
-                // Make React available externally for dev tools
-                bundler.require('react');
-            })
-            .pipe(concat('bundle.js'));
-    stream.pipe(gulp.dest('dist/js'));
-});
-
-// Copies images to dist/images
-gulp.task('images', function() {
-    gulp.src('app/images/*')
-        .pipe(gulp.dest('dist/images'));
+    var b = browserify({debug: true});
+    b.transform(reactify);
+    // Make React available externally for dev tools
+    b.require('react');
+    return b.bundle()
+        .pipe(source('app/scripts/main.js'))
+        .pipe(gulp.dest('dist/js'));
 });
 
 // A task which combines all the tasks which copy everything to the dist
 // directory
-gulp.task('distify', ['html', 'css', 'javascript', 'images', 'vendor']);
+gulp.task('distify', ['html', 'css', 'javascript', 'vendor']);
 
 // Starts a livereload webserver
-gulp.task('webserver', ['distify'], function() {
+gulp.task('webserver', ['distify', 'watch'], function() {
     connect.server({
         livereload: true,
         root: 'dist',
