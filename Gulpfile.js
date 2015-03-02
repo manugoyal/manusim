@@ -3,8 +3,7 @@ var gulp = require('gulp'),
     concat = require('gulp-concat'),
     del = require('del'),
     connect = require('gulp-connect'),
-    watch = require('gulp-watch'),
-    uglify = require('gulp-uglify')
+    watch = require('gulp-watch')
 ;
 
 
@@ -18,6 +17,9 @@ gulp.task('vendor', function() {
     // We move the bootstrap directory to its own location inside vendor
     gulp.src('bower_components/bootstrap/dist/**/*')
         .pipe(gulp.dest('dist/vendor/bootstrap'));
+    // Same for jquery
+    gulp.src('bower_components/jquery/dist/**/*')
+        .pipe(gulp.dest('dist/vendor/jquery'));
 });
 
 
@@ -56,7 +58,7 @@ gulp.task('images', function() {
 gulp.task('distify', ['html', 'css', 'javascript', 'images', 'vendor']);
 
 // Starts a livereload webserver
-gulp.task('webserver', ['distify', 'test'], function() {
+gulp.task('webserver', ['distify'], function() {
     connect.server({
         livereload: true,
         root: 'dist',
@@ -66,7 +68,7 @@ gulp.task('webserver', ['distify', 'test'], function() {
 
 gulp.task('livereload', ['webserver'], function() {
     gulp.src('dist/**/*')
-        .pipe(watch())
+        .pipe(watch('*'))
         .pipe(connect.reload());
 });
 
