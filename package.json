@@ -1,5 +1,5 @@
 {
-  "name": "logisim",
+  "name": "manusim",
   "version": "0.0.0",
   "description": "A port of logisim",
   "main": "Gulpfile.js",
@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "logisim"
+    "manusim"
   ],
   "author": "Manu Goyal",
   "license": "MIT",

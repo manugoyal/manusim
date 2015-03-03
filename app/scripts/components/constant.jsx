@@ -1,15 +1,16 @@
 // The element object and react component for an output pin
 
 var React = require('react')
-, DOM = React.DOM
-, _ = require('underscore')
-, numeric = require('numeric')
+var DOM = React.DOM;
 
-, Point = require('../util/point')
-, port = require('../util/port')
-, tick = require('./tick')
-, misc = require('../util/misc')
-;
+var _ = require('underscore');
+var numeric = require('numeric');
+
+var Point = require('../util/point');
+var port = require('../util/port');
+var misc = require('../util/misc');
+
+var tick = require('./tick.jsx');
 
 function State(position, value) {
     this.position = position;
@@ -43,7 +44,6 @@ var Component = React.createClass({
         // If we clicked on the output port, register a click
         if (this.refs['output_0'].wasClicked(misc.getRelativePosition(
             event, this.refs.svg.getDOMNode()))) {
-            console.log('clicked output pin');
             this.props.registerClick(
                 this.props.stateObj.outputs[0]);
         }
@@ -54,27 +54,23 @@ var Component = React.createClass({
     render: function() {
         var obj = this.props.stateObj;
         var positions = Component.getPositions(obj);
-        var outputTick = tick.Tick({
-            pos: positions.tickCoords[port.output][0], ref: 'output_0'});
-
-        return DOM.svg(
-            {ref: 'svg', height: positions.height,
-             width: positions.width,
-             style: {position: 'fixed', left: obj.position.x,
-                     top: obj.position.y},
-             onMouseDown: this.handleMouseDown},
-            DOM.rect(
-                {x: 0, y: 0, width: positions.width - tick.length/2,
-                 height: positions.height,
-                 fill: 'transparent', stroke: 'black', strokeWidth: 2
-                }),
-            DOM.text(
-                {x: 5, y: positions.height/2, fill: 'black'},
-                obj.outputs[0].value().join('')),
-            outputTick
+        return (
+            <svg ref='svg' height={positions.height} width={positions.width}
+                 style={{position: 'fixed', left: obj.position.x,
+                         top: obj.position.y}}
+                 onMouseDown={this.handleMouseDown}>
+                <rect x={0} y={0} width={positions.width - tick.length/2}
+                      height={positions.height} fill='transparent'
+                      stroke='black' strokeWidth={2} />
+                <text x={5} y={positions.height/2} fill='black'>
+                    {obj.outputs[0].value().join('')}
+                </text>
+                <tick.Tick pos={positions.tickCoords[port.output][0]}
+                           ref='output_0' />
+            </svg>
         );
     }
 });
 
-State.prototype.renderingComponent = React.createFactory(Component);
+State.prototype.renderingComponent = Component;
 module.exports = State;

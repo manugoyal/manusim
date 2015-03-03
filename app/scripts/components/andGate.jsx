@@ -1,15 +1,16 @@
 // The element object and react component for the AND gate
 
 var React = require('react')
-, DOM = React.DOM
-, _ = require('underscore')
-, numeric = require('numeric')
+var DOM = React.DOM;
 
-, Point = require('../util/point')
-, port = require('../util/port')
-, tick = require('./tick')
-, misc = require('../util/misc')
-;
+var _ = require('underscore');
+var numeric = require('numeric');
+
+var Point = require('../util/point');
+var port = require('../util/port');
+var misc = require('../util/misc');
+
+var tick = require('./tick.jsx');
 
 function State(position, numInputs) {
     this.position = position;
@@ -129,7 +130,6 @@ var Component = React.createClass({
                 return this.refs['input_' + portInd].wasClicked(relativePos);
             }.bind(this));
         if (!_.isUndefined(clickedInputPort)) {
-            console.log('clicked input port ' + clickedInputPort);
             this.props.registerClick(
                 this.props.stateObj.inputs[clickedInputPort]);
             return;
@@ -137,7 +137,6 @@ var Component = React.createClass({
 
         // Checks if we clicked the output port
         if (this.refs['output_0'].wasClicked(relativePos)) {
-            console.log('clicked output pin');
             this.props.registerClick(
                 this.props.stateObj.outputs[0]);
             return;
@@ -152,37 +151,39 @@ var Component = React.createClass({
         var obj = this.props.stateObj;
         var positions = Component.getPositions(obj);
         var inputTicks = _.map(_.range(obj.inputs.length), function (ind) {
-            return tick.Tick({
-                pos: positions.tickCoords[port.input][ind],
-                key: 'input_' + ind,
-                ref: 'input_' + ind});
+            var refname = 'input_'+ind;
+            return (
+                <tick.Tick pos={positions.tickCoords[port.input][ind]}
+                           key={refname} ref={refname} />
+            );
         });
 
-        var outputTick = tick.Tick({
-            pos: positions.maxPoint, ref: 'output_0'});
+        var outputTick = (
+            <tick.Tick pos={positions.maxPoint} ref='output_0' />
+        );
 
-        return DOM.svg(
-            {ref: 'svg', height: positions.baseSize, width: positions.baseSize,
-             style: {position: 'fixed', left: obj.position.x,
-                     top: obj.position.y},
-             onMouseDown: this.handleMouseDown},
-            DOM.path(
-                {d: 'M ' + positions.startPoint +
-                 ' L ' + positions.endPoint +
-                 ' L ' + positions.horizLineBottom +
-                 ' M ' + positions.startPoint +
-                 ' L ' + positions.horizLineTop +
-                 ' M ' + positions.horizLineBottom +
-                 ' Q ' + positions.controlPoint +
-                 ', ' + positions.horizLineTop,
-                 stroke: 'black', fill: 'white', strokeWidth: 2
-                }),
-            inputTicks,
-            outputTick
+        return (
+            <svg ref='svg' height={positions.baseSize}
+                 width={positions.baseSize}
+                 style={{position: 'fixed', left: obj.position.x,
+                         top: obj.position.y}}
+                 onMouseDown={this.handleMouseDown}>
+                <path d={'M ' + positions.startPoint +
+                         ' L ' + positions.endPoint +
+                         ' L ' + positions.horizLineBottom +
+                         ' M ' + positions.startPoint +
+                         ' L ' + positions.horizLineTop +
+                         ' M ' + positions.horizLineBottom +
+                         ' Q ' + positions.controlPoint +
+                         ', ' + positions.horizLineTop}
+                      stroke='black' fill='white' strokeWidth={2} />
+                {inputTicks}
+                {outputTick}
+            </svg>
         );
     }
 });
 
 // Each state object points to the container used to render it
-State.prototype.renderingComponent = React.createFactory(Component);
+State.prototype.renderingComponent = Component;
 module.exports = State;

@@ -8,7 +8,7 @@ var _ = require('underscore');
 
 var Point = require('./util/point');
 
-var Wire = require('./components/wire');
+var Wire = require('./components/wire.jsx');
 
 var Container = React.createClass({
     getInitialState: function() {
@@ -91,13 +91,17 @@ var Container = React.createClass({
 
     render: function() {
         // Render each of the children
-        children = _.map(this.state.elements, function(stateObj) {
-            return stateObj.renderingComponent({
-                stateObj: stateObj,
-                startDrag: this.startDrag,
-                registerClick: this.registerClick
-            });
-        }.bind(this));
+        children = _.map(
+            _.range(this.state.elements.length), function(ind) {
+                var obj = this.state.elements[ind];
+                return (
+                    <obj.renderingComponent
+stateObj={obj} startDrag={this.startDrag}
+registerClick={this.registerClick}
+key={ind}
+/>
+                );
+            }.bind(this));
 
         // We also need to draw lines between each pair of connected ports. For
         // each child, we look at each of its output ports, and draw a line from
@@ -120,11 +124,13 @@ var Container = React.createClass({
             mouseup = this.endDrag;
         }
 
-        return DOM.div({
-            onMouseMove: mousemove,
-            onMouseUp: mouseup
-        }, children, lines);
+        return (
+            <div onMouseMove={mousemove} onMouseUp={mouseup}>
+                {children}
+                {lines}
+            </div>
+        );
     }
 });
 
-module.exports = React.createFactory(Container);
+module.exports = Container;

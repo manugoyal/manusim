@@ -1,10 +1,10 @@
 // A tick is an input or output of a gate that wires can be connected to.
-var React = require('react')
-, DOM = React.DOM
-, _ = require('underscore')
+var React = require('react');
+var DOM = React.DOM;
 
-, Point = require('../util/point')
-;
+var _ = require('underscore');
+
+var Point = require('../util/point');
 
 var length = 10;
 // The radius around which clicking will associate with the tick
@@ -26,15 +26,19 @@ var Tick = React.createClass({
     },
 
     render: function() {
-        return DOM.line({
-            key: this.props.key,
-            x1: this.props.pos.x - length/2, y1: this.props.pos.y,
-            x2: this.props.pos.x + length/2, y2: this.props.pos.y,
-            stroke: 'blue'});
+        return (
+            <line
+                 x1={this.props.pos.x - length/2}
+                 y1={this.props.pos.y}
+                 x2={this.props.pos.x + length/2}
+                 y2={this.props.pos.y}
+                 stroke='blue'>
+            </line>
+        );
     }
 });
 
 module.exports.length = length;
 module.exports.clickRadius = clickRadius;
 module.exports.vSpace = vSpace;
-module.exports.Tick = React.createFactory(Tick);
+module.exports.Tick = Tick;
