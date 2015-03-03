@@ -1,30 +1,13 @@
 // A tick is an input or output of a gate that wires can be connected to.
 var React = require('react');
-var DOM = React.DOM;
-
-var _ = require('underscore');
-
-var Point = require('../util/point');
 
 var length = 10;
 // The radius around which clicking will associate with the tick
-var clickRadius = 10;
+var clickRadius = 15;
 // The spacing around each tick
-var vSpace = 20;
+var space = 2*clickRadius;
 
 var Tick = React.createClass({
-    getPos: function() {
-        return this.props.pos;
-    },
-
-    wasClicked: function(relativePos) {
-        return relativePos.withinBox(
-            new Point(this.props.pos.x - length/2 - clickRadius,
-                      this.props.pos.y - clickRadius),
-            new Point(this.props.pos.x + length/2 + clickRadius,
-                      this.props.pos.y + clickRadius));
-    },
-
     render: function() {
         return (
             <line
@@ -40,5 +23,5 @@ var Tick = React.createClass({
 
 module.exports.length = length;
 module.exports.clickRadius = clickRadius;
-module.exports.vSpace = vSpace;
+module.exports.space = space;
 module.exports.Tick = Tick;

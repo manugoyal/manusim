@@ -1,80 +1,39 @@
 // The element object and react component for an output pin
 
-var React = require('react')
-var DOM = React.DOM;
+var React = require('react');
+var Backbone = require('backbone');
 
-var _ = require('underscore');
-var numeric = require('numeric');
+var BoxedDataMixin = require('./BoxedDataMixin.js');
+var TickOrDragMixin = require('./tickOrDragMixin');
 
-var Point = require('../util/point');
-var port = require('../util/port');
-var misc = require('../util/misc');
+var Port = require('../data/port');
 
-var tick = require('./tick.jsx');
-
-function State(position, dataBits) {
-    this.position = position;
-    if (dataBits === 1) {
-        throw 'Cannot create output pin with fewer than one data bit';
-    }
-    this.dataBits = dataBits;
-    this.inputs = [new port.Port(this, 0, port.input)];
-    this.outputs = [];
-}
-
-var Component = React.createClass({
+var OutputPinView = React.createClass({
     statics: {
-        getPositions: function(obj) {
-            var pxPerBit = 10;
-            var height = 30;
-            var width = pxPerBit * obj.dataBits + tick.length/2;
-            var tickCoords = {};
-            tickCoords[port.input] = [new Point(tick.length/2, height/2)];
-            tickCoords[port.output] = [];
-            return {
-                height: height,
-                width: width,
-                tickCoords: tickCoords
-            };
+        getPositions: function(element) {
+            var port = element.get('ports')[0]
+            if (port.has('value')) {
+                return OutputPinView.boxedDataPositions(
+                    element, port.get('value').length, false);
+            } else {
+                return OutputPinView.boxedDataPositions(
+                    element, 'undefined'.length, false);
+            }
         }
     },
 
-    handleMouseDown: function(event) {
-        // If we clicked on the input port, register a click
-        if (this.refs['input_0'].wasClicked(misc.getRelativePosition(
-            event, this.refs.svg.getDOMNode()))) {
-                this.props.registerClick(
-                    this.props.stateObj.inputs[0]);
+    mixins: [BoxedDataMixin, TickOrDragMixin]
+});
+
+var OutputPinElement = Backbone.Model.extend({
+    initialize: function() {
+        if (!this.has('position')) {
+            throw 'Initial position required';
         }
-        // Otherwise, start a drag
-        this.props.startDrag(this.props.stateObj, event);
-    },
 
-    render: function() {
-        var obj = this.props.stateObj;
-        var positions = Component.getPositions(obj);
-        var inputValue = obj.inputs[0].value();
-
-        return (
-            <svg ref='svg' height={positions.height}
-                 width={positions.width}
-                 style={{position: 'fixed', left: obj.position.x,
-                         top: obj.position.y}}
-                 onMouseDown={this.handleMouseDown}>
-                <rect x={tick.length/2} y={0}
-                      width={positions.width - tick.length/2}
-                      height={positions.height} fill='transparent'
-                      stroke='black' strokeWidth={2} />
-                <text x={tick.length+5} y={positions.height/2} fill='black'>
-                    {_.isUndefined(inputValue) ?
-                     'undefined' : inputValue.join('')}
-                </text>
-                <tick.Tick pos={positions.tickCoords[port.input][0]}
-                           ref='input_0' />
-            </svg>
-        );
+        this.set({ports: [new Port.InputPort({element: this, ind: 0})],
+                  view: OutputPinView});
     }
 });
 
-State.prototype.renderingComponent = Component;
-module.exports = State;
+module.exports = OutputPinElement;

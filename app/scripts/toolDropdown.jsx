@@ -52,7 +52,8 @@ var ToolDropdown = React.createClass({
                     "Enter the number of inputs: "));
                 if (!_.isNaN(numInputs)) {
                     this.props.eventEmitter.emit(
-                        'addElement', new AndGate(startPoint, numInputs));
+                        'addElement', new AndGate(
+                            {position: startPoint, numInputs: numInputs}));
                 }
             }.bind(this)),
 
@@ -66,18 +67,15 @@ var ToolDropdown = React.createClass({
                         return bit === 1 || bit === 0;
                     })) {
                         this.props.eventEmitter.emit(
-                            'addElement', new Constant(startPoint, items));
+                            'addElement', new Constant(
+                                {position: startPoint, portValue: items}));
                     }
                 }
             }.bind(this)),
 
             this.makeDropdownListItem('Output Pin', function() {
-                var dataBits = parseInt(prompt(
-                    "Enter the number of data bits: "));
-                if (!_.isNaN(dataBits)) {
-                    this.props.eventEmitter.emit(
-                        'addElement', new OutputPin(startPoint, dataBits));
-                }
+                this.props.eventEmitter.emit(
+                    'addElement', new OutputPin({position: startPoint}));
             }.bind(this)),
         ];
 

@@ -2,11 +2,12 @@
 // onto. It maintains a global state of all the elements, and deterministically
 // re-renders everything on change.
 var React = require('react');
-var DOM = React.DOM;
 
 var _ = require('underscore');
 
 var Point = require('./util/point');
+
+var Port = require('./data/port');
 
 var Wire = require('./components/wire.jsx');
 
@@ -44,20 +45,24 @@ var Container = React.createClass({
 
     // This will be called by children elements, when they get a mousedown, and
     // we will start dragging the element around.
-    startDrag: function(elementState, event) {
+    startDrag: function(element, clickPos) {
         this.setState({dragInfo: {
-            elm: elementState, initPos: elementState.position,
-            clickPos: new Point(event.pageX, event.pageY)}});
+            elm: element, initPos: element.get('position'),
+            clickPos: clickPos}});
     },
 
     // When we're in drag mode, we handle mousemove and move the element to the
     // position specified in event relative to its starting position
     onDrag: function(event) {
-        this.state.dragInfo.elm.position = new Point(
-            this.state.dragInfo.initPos.x +
-                (event.pageX - this.state.dragInfo.clickPos.x),
-            this.state.dragInfo.initPos.y +
-                (event.pageY - this.state.dragInfo.clickPos.y));
+        var svgOffset = $(this.refs.svg.getDOMNode()).offset();
+        var relativeDragPos = new Point(
+            event.pageX, event.pageY).relativeTo(
+                new Point(svgOffset.left, svgOffset.top));
+        var initPosOffset = relativeDragPos.relativeTo(
+            this.state.dragInfo.clickPos);
+        this.state.dragInfo.elm.set({position: new Point(
+            this.state.dragInfo.initPos.x + initPosOffset.x,
+            this.state.dragInfo.initPos.y + initPosOffset.y)});
         this.forceUpdate();
     },
 
@@ -75,60 +80,63 @@ var Container = React.createClass({
         if (_.isNull(this.state.firstClickedPort)) {
             this.setState({firstClickedPort: port});
         } else {
-            // Only makes the connection if it's between an output and input
-            // port
-            if (this.state.firstClickedPort.type === port.type) {
-                alert("Cannot make connection between two ports of type " +
-                      port.type);
-                this.setState({firstClickedPort: null});
-            } else {
-                this.state.firstClickedPort.toPorts.push(port);
-                port.fromPorts.push(this.state.firstClickedPort);
-                this.setState({firstClickedPort: null});
+            try {
+                this.state.firstClickedPort.addEdge(port);
+            } catch (err) {
+                alert(err);
             }
+            this.setState({firstClickedPort: null});
         }
     },
 
     render: function() {
-        // Render each of the children
-        children = _.map(
-            _.range(this.state.elements.length), function(ind) {
-                var obj = this.state.elements[ind];
-                return (
-                    <obj.renderingComponent
-stateObj={obj} startDrag={this.startDrag}
-registerClick={this.registerClick}
-key={ind}
-/>
-                );
-            }.bind(this));
-
-        // We also need to draw lines between each pair of connected ports. For
-        // each child, we look at each of its output ports, and draw a line from
-        // the port to each of the ports it goes out to.
+        /* Render each of the children. As properties, we pass a number of
+        functions and data that child handler code can use to access container
+        data. */
+        children = _.map(this.state.elements, function(elm, ind) {
+            var View = elm.get('view');
+            return (
+                <View element={elm} key={ind} startDrag={this.startDrag}
+                registerClick={this.registerClick}
+                containerRefs={this.refs} />
+            );
+        }.bind(this));
+        
+        /* We also need to draw wires between connected ports. We only draw
+           edges going from output ports to input ports. For each output port,
+           we look at each of its edges, and draw a line from the port to each
+           of the input ports it touches. */
         lines = [];
-        _.each(this.state.elements, function(stateObj) {
-            _.each(stateObj.outputs, function(outputPort) {
-                _.each(outputPort.toPorts, function(toPort) {
-                    lines.push(Wire({port1: outputPort, port2: toPort}));
-                });
+        _.each(this.state.elements, function(element) {
+            _.each(element.get('ports'), function(port) {
+                if (port instanceof Port.OutputPort) {
+                    _.each(port.get('edges'), function(toPort) {
+                        lines.push(<Wire port1={port} port2={toPort}
+                                         key={lines.length} />);
+                    });
+                }
             });
         });
 
-        // If we're in drag mode, pass the onDrag and endDrag handlers to the
-        // div
+        /* If we're in drag mode, pass the onDrag and endDrag handlers to the
+        div */
         var mousemove = null,
             mouseup = null;
         if (!_.isNull(this.state.dragInfo)) {
             mousemove = this.onDrag;
             mouseup = this.endDrag;
         }
+        
+        var width = $(document).width();
+        var height = $(document).height();
 
         return (
-            <div onMouseMove={mousemove} onMouseUp={mouseup}>
+            <svg height={height} width={width} id='container'
+                 xmlns='http://www.w3.org/2000/svg' ref='svg'
+                 onMouseMove={mousemove} onMouseUp={mouseup}>
                 {children}
                 {lines}
-            </div>
+            </svg>
         );
     }
 });
