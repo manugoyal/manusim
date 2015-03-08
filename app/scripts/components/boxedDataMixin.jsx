@@ -40,7 +40,7 @@ module.exports = {
     render: function() {
         var element = this.props.element;
         var positions = element.get('view').getPositions(element);
-        var tickPos = positions.tickCoords[element.get('ports')[0].get('ind')];
+        var port = element.get('ports')[0];
         var textValue = element.get('ports')[0].has('value') ?
                         element.get('ports')[0].get('value').join('') :
                         'undefined';
@@ -56,7 +56,8 @@ module.exports = {
                          positions.fontSize*2/3} fill='black'>
                     {textValue}
                 </text>
-                <Tick.Tick pos={tickPos} />
+                <Tick.Tick pos={positions.tickCoords[port.get('ind')]}
+                           port={port} />
             </g>
         );
     }

@@ -72,16 +72,23 @@ var Container = React.createClass({
         this.setState({dragInfo: null});
     },
 
-    // This will be called by children elements when one of their ports is
-    // clicked. If it's the first click, we set firstClickedPort. If it's the
-    // second click, we connect the proper ports, reset firstClickedPort, and
-    // rerender.
+    /* This will be called by children elements when one of their ports is
+       clicked. If it's the first click, we set firstClickedPort. If it's the
+       second click, we connect the proper ports, making sure the edge goes from
+       an output port to an input, reset firstClickedPort, and re-render. */
     registerClick: function(port) {
         if (_.isNull(this.state.firstClickedPort)) {
+            port.toggleClicked();
             this.setState({firstClickedPort: port});
         } else {
+            var firstPort = this.state.firstClickedPort;
+            firstPort.toggleClicked();
             try {
-                this.state.firstClickedPort.addEdge(port);
+                if (firstPort instanceof Port.OutputPort) {
+                    firstPort.addEdge(port);
+                } else {
+                    port.addEdge(firstPort);
+                }
             } catch (err) {
                 alert(err);
             }
@@ -101,11 +108,10 @@ var Container = React.createClass({
                 containerRefs={this.refs} />
             );
         }.bind(this));
-        
         /* We also need to draw wires between connected ports. We only draw
-           edges going from output ports to input ports. For each output port,
-           we look at each of its edges, and draw a line from the port to each
-           of the input ports it touches. */
+           edges going from output ports to input ports, because users can only
+           create edges from output to input ports, and those are the only
+           visible edges. */
         lines = [];
         _.each(this.state.elements, function(element) {
             _.each(element.get('ports'), function(port) {

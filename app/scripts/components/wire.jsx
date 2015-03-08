@@ -12,7 +12,8 @@ var Wire = React.createClass({
                               .tickCoords[this.props.port2.get('ind')]
         return (
             <line x1={port1Pos.x} y1={port1Pos.y}
-                  x2={port2Pos.x} y2={port2Pos.y} stroke='green' />
+                  x2={port2Pos.x} y2={port2Pos.y} stroke='green'
+                  style={{'pointerEvents': 'none'}} />
         );
     }
 });

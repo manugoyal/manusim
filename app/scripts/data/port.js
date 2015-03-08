@@ -6,7 +6,9 @@
 // copy their value from exactly one output port. Output ports maintain a value
 // as a function of zero or more input ports. This means ports form a bipartite
 // graph dividing the inputs and outputs, so every edge must go between an input
-// and an output.
+// and an output. Furthermore, output ports have a fixed and unchanging set of
+// input ports that they get their values from. New edges can only go from
+// output ports to input ports.
 
 // Ports listen for updates from their incoming connections in order to update
 // their values on the fly. When an input port or output port changes its value,
@@ -36,8 +38,10 @@ var Port = Backbone.Model.extend({
         } else if (!this.has('ind')) {
             throw 'Port constructor must be passed the port index';
         }
-        // Every port starts out with an empty list of edges
-        this.set({edges: []});
+        // Every port starts out with an empty list of edges. We also maintain a
+        // boolean indicating whether that port is clicked, meaning it has been
+        // selected to form a connection with another port.
+        this.set({edges: [], clicked: false});
     },
 
     // When a port wants to propagate a value change to a port, it will call its
@@ -58,25 +62,25 @@ var Port = Backbone.Model.extend({
     // When we add an edge from this port to another, we should always check if
     // we're creating a cycle. We only need to check with the edge just added,
     // since by induction the graph was acyclic before adding the edge.
-    checkForCycle: function(newPort) {
+    checkForCycle: function(toPort) {
         // We run DFS, which is pretty slow but since we're probably not dealing
         // with too many nodes here, it's probably okay. If there's already a
         // path from the new port to this port, then adding an edge will create
         // a cycle.
         var visited = {};
-        visited[this.cid] = true;
+        var thisCid = this.cid;
         var hasCycle = false;
         var dfsFunc = function(port) {
             visited[port.cid] = true;
             _.each(port.get('edges'), function(nextPort) {
-                if (_.has(visited, nextPort.cid)) {
+                if (nextPort.cid === thisCid) {
                     hasCycle = true;
-                } else {
+                } else if (!_.has(visited, nextPort.cid)) {
                     dfsFunc(nextPort);
                 }
             });
         };
-        dfsFunc(newPort);
+        dfsFunc(toPort);
         return hasCycle;
     },
 
@@ -93,10 +97,8 @@ var Port = Backbone.Model.extend({
         if (_.indexOf(this.get('edges'), toPort) !== -1) {
             throw 'There is already an edge to the port';
         }
+        toPort.updateValue(this);
         this.set({edges: this.get('edges').concat(toPort)});
-        if (this.has('value')) {
-            toPort.updateValue(this);
-        }
     },
 
     // When we want to remove an edge from this port to another, we remove it
@@ -109,49 +111,12 @@ var Port = Backbone.Model.extend({
         }
         this.set({edges: withoutPort});
         toPort.disengageFrom(this);
-    }
-});
-
-var InputPort = Port.extend({
-    defaults: {
-        // For certain circuit elements (like a mux), different input ports have
-        // different purposes (like input bit vs selector bit). This is useful
-        // for the output port to tell what to use the port for.
-        'type': 'none'
     },
 
-    initialize: function(attributes) {
-        // In addition to the super's initializer, we store the clientId of the
-        // single output port that points to this input port, if there is one.
-        // Recall that there can only be one port pointing to an input port at
-        // any time.
-        Port.prototype.initialize.apply(this, attributes);
-        this.set({fromId: null});
-    },
-
-    updateValue: function(fromPort) {
-        if (this.has('value') && this.get('fromId') !== fromPort.cid) {
-            throw 'Cannot update value from different port without first ' +
-                'disengaging the existing one';
-        }
-        if (!fromPort.has('value')) {
-            throw 'fromPort cannot call updateValue without a valid value';
-        }
-        if (fromPort.get('value') !== this.get('value')) {
-            this.set({fromId: fromPort.cid, value: fromPort.get('value')});
-            _.each(this.get('edges'), function(port) {
-                port.updateValue(this);
-            }.bind(this));
-        }
-    },
-
-    disengageFrom: function(fromPort) {
-        if (!this.has('value')) {
-            throw 'There is no port to disengage from';
-        } else if (this.get('fromId') !== fromPort.fromId) {
-            throw 'Disengaging port\'s id does not match stored id';
-        }
-        this.set({fromId: null, value: null});
+    // When we click or unclick a port, this method will toggle the clicked
+    // state.
+    toggleClicked: function() {
+        this.set({clicked: !this.get('clicked')});
     }
 });
 
@@ -183,9 +148,6 @@ var OutputPort = Port.extend({
         if (_.indexOf(this.get('fromPorts'), fromPort) === -1) {
             this.set({fromPorts: this.get('fromPorts').concat(fromPort)});
         }
-        if (!fromPort.has('value')) {
-            throw 'fromPort cannot call updateValue without a valid value';
-        }
         var evaluated = this.evaluate(this.get('fromPorts'));
         if (evaluated !== this.get('value')) {
             this.set({value: evaluated});
@@ -201,6 +163,46 @@ var OutputPort = Port.extend({
         }
         this.set({fromPorts: _.without(this.get('fromPorts'), fromPort)});
         this.set({value: this.evaluate(this.get('fromPorts'))});
+    }
+});
+
+var InputPort = Port.extend({
+    defaults: {
+        // For certain circuit elements (like a mux), different input ports have
+        // different purposes (like input bit vs selector bit). This is useful
+        // for the output port to tell what to use the port for.
+        'type': 'none'
+    },
+
+    initialize: function(attributes) {
+        // In addition to the super's initializer, we store the clientId of the
+        // single output port that points to this input port, if there is one.
+        // Recall that there can only be one port pointing to an input port at
+        // any time.
+        Port.prototype.initialize.apply(this, attributes);
+        this.set({fromId: null});
+    },
+
+    updateValue: function(fromPort) {
+        if (this.has('fromId') && this.get('fromId') !== fromPort.cid) {
+            throw 'Cannot update value from different port without first ' +
+                'disengaging the existing one';
+        }
+        if (fromPort.get('value') !== this.get('value')) {
+            this.set({fromId: fromPort.cid, value: fromPort.get('value')});
+            _.each(this.get('edges'), function(port) {
+                port.updateValue(this);
+            }.bind(this));
+        }
+    },
+
+    disengageFrom: function(fromPort) {
+        if (!this.has('value')) {
+            throw 'There is no port to disengage from';
+        } else if (this.get('fromId') !== fromPort.fromId) {
+            throw 'Disengaging port\'s id does not match stored id';
+        }
+        this.set({fromId: null, value: null});
     }
 });
 

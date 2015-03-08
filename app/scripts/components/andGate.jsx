@@ -69,8 +69,11 @@ var AndView = React.createClass({
     render: function() {
         var obj = this.props.element;
         var positions = AndView.getPositions(obj);
-        var ticks = _.map(positions.tickCoords, function(pos) {
-            return (<Tick.Tick pos={pos} key={pos} />);
+        var ticks = _.map(obj.get('ports'), function(port) {
+            return (
+                <Tick.Tick pos={positions.tickCoords[port.get('ind')]}
+                           key={port.get('ind')} port={port} />
+            );
         });
 
         return (
@@ -97,6 +100,13 @@ var AndOutputPort = Port.OutputPort.extend({
         if (inputPorts.length !== this.get('requiredInputs')) {
             return null;
         }
+        if (!_.isUndefined(_.find(inputPorts, function(port) {
+            return !port.has('value');
+        }))) {
+            // All of the ports must have a valid value for the output to work.
+            return null;
+        }
+
         var result = inputPorts[0].get('value').slice();
         _.each(_.range(1, inputPorts.length), function(ind) {
             if (_.isNull(result)) {

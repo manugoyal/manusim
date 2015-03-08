@@ -2,7 +2,7 @@
 var React = require('react');
 var Backbone = require('backbone');
 
-var BoxedDataMixin = require('./boxedDataMixin');
+var BoxedDataMixin = require('./boxedDataMixin.jsx');
 var TickOrDragMixin = require('./tickOrDragMixin');
 
 var Port = require('../data/port');

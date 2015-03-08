@@ -9,14 +9,16 @@ var space = 2*clickRadius;
 
 var Tick = React.createClass({
     render: function() {
+        var circlefill = this.props.port.get('clicked') ? 'red' : 'transparent';
         return (
-            <line
-                 x1={this.props.pos.x - length/2}
-                 y1={this.props.pos.y}
-                 x2={this.props.pos.x + length/2}
-                 y2={this.props.pos.y}
-                 stroke='blue'>
-            </line>
+            <g>
+                <line
+                 x1={this.props.pos.x - length/2} y1={this.props.pos.y}
+                 x2={this.props.pos.x + length/2} y2={this.props.pos.y}
+                 stroke='blue' />
+                <circle cx={this.props.pos.x} cy={this.props.pos.y}
+                        r={length/2} fill={circlefill} />
+            </g>
         );
     }
 });
